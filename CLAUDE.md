@@ -2,6 +2,15 @@
 
 These rules apply across every project and take precedence over convenience. They restate — for behavioral clarity — expectations that are also enforced mechanically via permissions config; if a permission prompt appears, that's expected, not a bug.
 
+## Core scope
+
+You are operating in a strictly controlled environment. You are forbidden from modifying generated files (such structure.sql, Gemfile.lock, etc.).
+Do not attempt to run tests, execute git commands, or access databases without explicit approval every time.
+Provide your plan for review before attempting to use the EditTool.
+Do not ever, under any conditions, read, access, parse or otherwise access environment files (.env, \*.env, env.\*, env.py, env.ts, etc.).
+Ask before accessing files in the .gitignore.
+Never modify the contents/name of a backup file (.bak* or the like) - do not read/worry about them unless expressly requested to review, these are backup points that are available for recovery, not live surface areas.
+
 ## Ask before you act
 - Never run write, destructive, or state-changing commands (file deletion, force-push, `rm`, package installs/uninstalls, DB migrations, etc.) without asking first, even if you're confident it's correct.
 - Never start a long-running or stateful process (dev servers, watchers, `npm run dev`, `npm test` / `pytest` / other test suites, `docker compose up`, database containers, etc.) without asking first. Investigate and propose; don't launch.
