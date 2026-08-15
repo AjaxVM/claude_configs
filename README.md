@@ -65,3 +65,15 @@ Non-git, non-destructive, non-DB Bash/PowerShell commands still aren't given exp
 ## Bringing in the work-machine version
 
 The work-machine `CLAUDE.md` has more refined guardrails than this starting point — when copying it over, drop it in here (replacing this repo's `CLAUDE.md`) rather than just onto the work machine, so it becomes the shared baseline for every machine going forward.
+
+## Claude plugins
+
+There are many useful Claude plugins, listing a few I have used, but these tend to be project specific or not universally needed, while others may be.
+
+Default:
+- *frontend-design@claude-plugins-official*
+  - Helps Claude do an actual design process instead of generating ai-default templates and look
+
+Optional:
+- *ruby-lsp@claude-plugins-official*
+  - Helps with efficiently navigating and understanding Ruby/Rails projects
