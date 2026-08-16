@@ -39,3 +39,20 @@ Never touch a database directly. You are not to use raw DB CLI clients (`psql`, 
 
 ## Compound commands
 Before running a Bash/PowerShell command that chains multiple operations (`&&`, `||`, `;`, `|`, `&`, backticks, `$(...)`), account for what every segment does. Never construct a compound command specifically to get a destructive, database, or credential-touching action past approval.
+
+## Project management controls
+
+Do not execute tests, migrations, system start commands (docker compose up, npm start, etc.) without approval. These are owned by the coder and are a critical system for their review of your work, not something you should be using automatically.
+
+## Coding Style
+
+### Succinct style and factoring
+
+I have noticed a tendency for you to refactor very verbosely, and to add a lot of wrapper functions.
+A few rules I would like you to favor:
+- If something is referenced/set only once or internally, or there is not apparently need for it, do not wrap in a getter/setter function for the sake of it
+- When commenting code, keep it succinct, and describe the context/why for the line, not what it does, unless what it does is hard for a human to read (arcane regex, specific bit/memory locations, etc.)
+- A maintainer should be able to tell from the code what it is doing
+- A user should need to open as few files as possible to understand how a system functions
+  - sometimes there may be a need for many files when a system is complex or wide enough
+  - a general rule of thumb would be that 2-3 files should be sufficient to understand a relatively simple system (user invitations for example)
