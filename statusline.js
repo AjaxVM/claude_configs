@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
+const os = require('os');
 
 let raw = '';
 process.stdin.on('data', (chunk) => { raw += chunk; });
@@ -19,7 +19,6 @@ process.stdin.on('end', () => {
 function buildStatusLine(data) {
   const segments = [
     dirSegment(data),
-    blurbSegment(data),
     usageSegment(data),
     modelSegment(data),
     contextSegment(data),
@@ -34,8 +33,20 @@ function dirSegment(data) {
   const ws = data.workspace || {};
   const dir = ws.current_dir || ws.project_dir || data.cwd;
   if (!dir) return null;
-  const base = dir.split(/[\\/]/).filter(Boolean).pop() || dir;
-  return `./${base}`;
+
+  const normalized = dir.replace(/\\/g, '/');
+  const home = os.homedir().replace(/\\/g, '/');
+
+  let tildePath = null;
+  if (normalized === home) {
+    tildePath = '~';
+  } else if (normalized.startsWith(home + '/')) {
+    tildePath = '~' + normalized.slice(home.length);
+  }
+
+  // pick whichever anchor (home or root) renders shorter; ties favor tilde
+  if (tildePath && tildePath.length <= normalized.length) return tildePath;
+  return normalized;
 }
 
 // -- model + effort -------------------------------------------------------
@@ -111,92 +122,3 @@ function formatClock(d) {
   return `${h}:${String(m).padStart(2, '0')}${ampm}`;
 }
 
-// -- best-effort session description (official data only) --------------------
-
-function blurbSegment(data) {
-  if (data.transcript_path) {
-    const line = readBlurbFromTranscript(data.transcript_path);
-    if (line) return `"${line}"`;
-  }
-  if (data.output_style && data.output_style.name && data.output_style.name !== 'default') {
-    return `[${data.output_style.name}]`;
-  }
-  return null;
-}
-
-// Reads only the tail of the transcript (bounded cost regardless of session length).
-function readTail(path, maxBytes) {
-  const stat = fs.statSync(path);
-  const start = Math.max(0, stat.size - maxBytes);
-  const fd = fs.openSync(path, 'r');
-  try {
-    const buf = Buffer.alloc(stat.size - start);
-    fs.readSync(fd, buf, 0, buf.length, start);
-    return buf.toString('utf8');
-  } finally {
-    fs.closeSync(fd);
-  }
-}
-
-function readBlurbFromTranscript(transcriptPath) {
-  let lines;
-  try {
-    const tail = readTail(transcriptPath, 200_000);
-    // drop the first line: it may be a partial line cut mid-record by the byte offset
-    lines = tail.split('\n').slice(1).filter(Boolean);
-  } catch {
-    return null;
-  }
-  return findTodoBlurb(lines) || findLastAssistantText(lines);
-}
-
-// Best-effort: if this session used a todo/task-tracking tool, its in-progress
-// item is a much better "what's happening" label than raw assistant prose.
-// Defensive about the exact tool/field names since they aren't confirmed for
-// this harness — silently falls through to the text-based blurb if the shape
-// doesn't match what's expected.
-function findTodoBlurb(lines) {
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const entry = safeParse(lines[i]);
-    const msg = entry && entry.message;
-    if (!msg || msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
-    for (const block of msg.content) {
-      if (!block || block.type !== 'tool_use') continue;
-      if (typeof block.name !== 'string' || !/todo|task/i.test(block.name)) continue;
-      const todos = block.input && Array.isArray(block.input.todos) ? block.input.todos : null;
-      if (!todos) continue;
-      const item = todos.find((t) => t && t.status === 'in_progress')
-        || todos.find((t) => t && t.status === 'pending');
-      const label = item && (item.activeForm || item.content);
-      if (label) return cleanText(label, 40);
-    }
-  }
-  return null;
-}
-
-function findLastAssistantText(lines) {
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const entry = safeParse(lines[i]);
-    const msg = entry && entry.message;
-    if (!msg || msg.role !== 'assistant' || !Array.isArray(msg.content)) continue;
-    const textBlock = msg.content.find((b) => b && b.type === 'text' && b.text);
-    if (textBlock) {
-      const cleaned = cleanText(textBlock.text, 50);
-      if (cleaned) return cleaned;
-    }
-  }
-  return null;
-}
-
-function safeParse(line) {
-  try { return JSON.parse(line); } catch { return null; }
-}
-
-function cleanText(raw, maxLen) {
-  let text = raw.replace(/`/g, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
-  if (!text) return null;
-  const firstSentence = text.match(/^[^.!?\n]{5,}[.!?]/);
-  if (firstSentence) text = firstSentence[0];
-  if (text.length > maxLen) text = text.slice(0, maxLen - 3).trim() + '...';
-  return text;
-}
