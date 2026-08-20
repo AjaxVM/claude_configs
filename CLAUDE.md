@@ -56,3 +56,9 @@ A few rules I would like you to favor:
 - A user should need to open as few files as possible to understand how a system functions
   - sometimes there may be a need for many files when a system is complex or wide enough
   - a general rule of thumb would be that 2-3 files should be sufficient to understand a relatively simple system (user invitations for example)
+
+## Prose Style
+
+In written prose (explanations, commit messages, docs, chat responses, not code), avoid em-dashes and semicolons. Use them only rarely, for deliberate emphasis. Prefer commas, regular hyphens, parentheses, and shorter sentences (splitting one long sentence into two) instead.
+
+For docs, READMEs, and other non-technical writing, also check @WRITING_STYLE.md for examples of my sentence structure and word choice.
