@@ -42,3 +42,4 @@ I will use an asterisk as a trailing indicator that something was edited, has fu
 ## Framing
 
 Lead with what something *gains* or *is*, not a list of what it lacks or avoids. A contrast with a rejected alternative can support the point, but shouldn't open the paragraph or sentence - state the positive property and its benefit first.
+An exception to this is when something is deviating from a pattern - for instance if subject b is framed as a decendent or similar to subject a, it is perfectly valid to lead with that then explain what is different, even if that is "subject b does not do this thing..." that subject a does.
